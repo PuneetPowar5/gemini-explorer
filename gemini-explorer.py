@@ -65,26 +65,33 @@ if "area" not in st.session_state:
 
 # Display all chat history to the user
 for message in range(len(st.session_state.conversations)):
+    # Ignore the first prompt that formats the initial prompt
     if message > 0:
+        # Display chat history
         with st.chat_message(st.session_state.conversations[message]["role"]):
             st.markdown(st.session_state.conversations[message]["content"])
 
-# Collect user's name and area before proceeding
+# Collect user's name and area before proceeding to chatbot
 if st.session_state.name == "" or st.session_state.area == "":
+    # Ask the user for their name and what area they are from
     with st.form(key='user_info_form'):
         st.session_state.name = st.text_input("What is your name?", key="name_input_rex")
         st.session_state.area = st.text_input("Where are you from?", key="area_input_rex")
         submitted = st.form_submit_button("Submit")
 
+    # If any of the fields are left empty or the submit button is not pressed
+    # The application will stay on the page and wait for users to complete input
     if not submitted or st.session_state.name == "" or st.session_state.area == "":
         st.stop()
 
 # Create initial prompt for the user from Rex
 if st.session_state.area and st.session_state.name and len(st.session_state.conversations) == 0:
+    # Format the initial prompt to the user
     prompt = "Introduce your self as Rex, the user's assistant powered by " \
              "Google Gemini!. Form the introduction as a format in which you " \
              "sound like you are from " + st.session_state.area + " and you are introducing " \
                                                  "yourself to " + st.session_state.name
+    # Display the initial prompt from the chatbot
     llm(chat, prompt)
 
 # Getting the user input
