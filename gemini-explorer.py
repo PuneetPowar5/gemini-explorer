@@ -11,7 +11,7 @@ model = GenerativeModel(
     "gemini-pro",
     generation_config=config
 )
-chat = model.start_chat()
+chat = model.start_chat(response_validation=False)
 
 
 # Helper function to send messages between Gimini and User
@@ -21,10 +21,14 @@ def llm(chat: ChatSession, user_prompt):
     gem = chat.send_message(user_prompt)
 
     # Convert the Gemini response to text
-    response = gem.text
+    try:
+        response = gem.text
+    except ValueError as e:
+        response = "I'm sorry, but I couldn't process your request due to " \
+                   "safety filters or another issue."
 
     # Display Gemini response to the model
-    with st.chat_message("model"):
+    with st.chat_message("assistant"):
         st.markdown(response)
 
     # Record the User input and store it into chat history
@@ -38,7 +42,7 @@ def llm(chat: ChatSession, user_prompt):
     # Record the Gemini response and store it into chat history
     st.session_state.conversations.append(
         {
-            "role": "model",
+            "role": "assistant",
             "content": response
         }
     )
@@ -47,14 +51,41 @@ def llm(chat: ChatSession, user_prompt):
 # Title the Model
 st.title("Gemini Explorer")
 
-# Check to see if there is a chat history initialized
+# Create conversations variable to keep track of conversation history in session
 if "conversations" not in st.session_state:
     st.session_state.conversations = []
 
+# Create name variable for the session to get users name
+if "name" not in st.session_state:
+    st.session_state.name = ""
+
+# Create area variable for the session to get the users area
+if "area" not in st.session_state:
+    st.session_state.area = ""
+
 # Display all chat history to the user
-for message in st.session_state.conversations:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+for message in range(len(st.session_state.conversations)):
+    if message > 0:
+        with st.chat_message(st.session_state.conversations[message]["role"]):
+            st.markdown(st.session_state.conversations[message]["content"])
+
+# Collect user's name and area before proceeding
+if st.session_state.name == "" or st.session_state.area == "":
+    with st.form(key='user_info_form'):
+        st.session_state.name = st.text_input("What is your name?", key="name_input_rex")
+        st.session_state.area = st.text_input("Where are you from?", key="area_input_rex")
+        submitted = st.form_submit_button("Submit")
+
+    if not submitted or st.session_state.name == "" or st.session_state.area == "":
+        st.stop()
+
+# Create initial prompt for the user from Rex
+if st.session_state.area and st.session_state.name and len(st.session_state.conversations) == 0:
+    prompt = "Introduce your self as Rex, the user's assistant powered by " \
+             "Google Gemini!. Form the introduction as a format in which you " \
+             "sound like you are from " + st.session_state.area + " and you are introducing " \
+                                                 "yourself to " + st.session_state.name
+    llm(chat, prompt)
 
 # Getting the user input
 user_input = st.chat_input("Enter your prompt: ")
