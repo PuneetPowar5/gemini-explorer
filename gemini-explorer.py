@@ -14,7 +14,7 @@ model = GenerativeModel(
 chat = model.start_chat(response_validation=False)
 
 
-# Helper function to send messages between Gimini and User
+# Helper function to send messages between Gemini and User
 def llm(chat: ChatSession, user_prompt):
 
     # Send prompt to Gemini
